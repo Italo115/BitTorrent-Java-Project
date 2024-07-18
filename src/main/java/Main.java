@@ -9,7 +9,6 @@ public class Main {
     public static void main(String[] args) throws Exception {
         String command = args[0];
 
-
         if ("decode".equals(command)) {
             Object decoded;
             try {

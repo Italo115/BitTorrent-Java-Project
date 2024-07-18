@@ -1,6 +1,9 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,12 +91,54 @@ public class BencodeDecoder {
         return data;
     }
 
-    public static void printTorrentInfo(Map<String, Object> decodedDictionary) {
+    public static byte[] bencode(Map<String, Object> dictionary) {
+        StringBuilder sb = new StringBuilder();
+        bencodeHelper(dictionary, sb);
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static void bencodeHelper(Object obj, StringBuilder sb) {
+        if (obj instanceof String) {
+            String str = (String) obj;
+            sb.append(str.length()).append(':').append(str);
+        } else if (obj instanceof Long) {
+            sb.append('i').append(obj).append('e');
+        } else if (obj instanceof List) {
+            sb.append('l');
+            for (Object item : (List<?>) obj) {
+                bencodeHelper(item, sb);
+            }
+            sb.append('e');
+        } else if (obj instanceof Map) {
+            sb.append('d');
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) obj).entrySet()) {
+                bencodeHelper(entry.getKey(), sb);
+                bencodeHelper(entry.getValue(), sb);
+            }
+            sb.append('e');
+        }
+    }
+
+    public static void printTorrentInfo(Map<String, Object> decodedDictionary) throws NoSuchAlgorithmException {
         String announce = (String) decodedDictionary.get("announce");
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
 
         System.out.println("Tracker URL: " + announce);
         System.out.println("Length: " + length);
+
+        byte[] bencodedInfo = bencode(info);
+        MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
+        byte[] infoHash = sha1Digest.digest(bencodedInfo);
+
+        System.out.println("Info Hash: " + bytesToHex(infoHash));
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
