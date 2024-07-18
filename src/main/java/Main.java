@@ -1,5 +1,7 @@
 import com.google.gson.Gson;
 
+import java.nio.charset.StandardCharsets;
+
 public class Main {
     private static final Gson gson = new Gson();
 
@@ -9,7 +11,7 @@ public class Main {
             String bencodedValue = args[1];
             Object decoded;
             try {
-                BencodeDecoder decoder = new BencodeDecoder(bencodedValue);
+                BencodeDecoder decoder = new BencodeDecoder(bencodedValue.getBytes(StandardCharsets.UTF_8));
                 decoded = decoder.decode();
             } catch (RuntimeException e) {
                 System.out.println(e.getMessage());
