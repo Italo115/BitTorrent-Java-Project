@@ -126,7 +126,7 @@ public class BencodeDecoder {
         String announce = (String) decodedDictionary.get("announce");
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
-        System.out.println("Info goes here : ----- " + info);
+        System.out.println("Info goes here : ----- " + info.entrySet());
         System.out.println("Tracker URL: " + announce);
         System.out.println("Length: " + length);
 
