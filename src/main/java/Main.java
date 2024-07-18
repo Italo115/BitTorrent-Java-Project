@@ -46,7 +46,7 @@ public class Main {
             System.out.println("Tracker URL: " + torrent.announce);
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
-            System.out.printf("Piece Length: %d\n", (long) torrent.info.get("piece length"));
+            System.out.printf("Piece Length: %d\n", torrent.pieceLength);
             printPieceHashes(torrent.info);
 
 
