@@ -42,7 +42,7 @@ public class Main {
             System.out.println(decoded);
         } else if (command.equals("info")) {
             String filePath = args[1];
-            Torrent torrent = new Torrent(Files.readAllBytes(Path.of(filePath)));
+            TorrentInfo torrent = new TorrentInfo(Files.readAllBytes(Path.of(filePath)));
             System.out.println("Tracker URL: " + torrent.announce);
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
@@ -76,21 +76,4 @@ public class Main {
     }
 }
 
-class Torrent {
-    public String announce;
-    public long length;
-    public byte[] infoHash;
 
-    public Torrent(byte[] bytes) throws NoSuchAlgorithmException {
-        Bencode bencode1 = new Bencode(false);
-        Bencode bencode2 = new Bencode(true);
-        Map<String, Object> root = bencode1.decode(bytes, Type.DICTIONARY);
-        Map<String, Object> info = (Map<String, Object>) root.get("info");
-        announce = (String) root.get("announce");
-        length = (long) info.get("length");
-        MessageDigest digest = MessageDigest.getInstance("SHA-1");
-        infoHash = digest.digest(bencode2.encode(
-                (Map<String, Object>) bencode2.decode(bytes, Type.DICTIONARY)
-                        .get("info")));
-    }
-}
