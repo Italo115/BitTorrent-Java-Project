@@ -1,36 +1,112 @@
-[![progress-banner](https://backend.codecrafters.io/progress/bittorrent/7e955b71-e3fc-401c-b9f5-90755e9aa415)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# BitTorrent Project in Java
 
-This is a starting point for Java solutions to the
-["Build Your Own BitTorrent" Challenge](https://app.codecrafters.io/courses/bittorrent/overview).
+## Completed Elements
 
-In this challenge, you’ll build a BitTorrent client that's capable of parsing a
-.torrent file and downloading a file from a peer. Along the way, we’ll learn
-about how torrent files are structured, HTTP trackers, BitTorrent’s Peer
-Protocol, pipelining and more.
+### Bencode Decoding
+Bencode (pronounced Bee-encode) is a serialization format used in the BitTorrent protocol. It supports four data types: strings, integers, arrays, and dictionaries. The following decoding capabilities have been implemented:
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
-
-# Passing the first stage
-
-The entry point for your BitTorrent implementation is in
-`src/main/java/Main.java`. Study and uncomment the relevant code, and push your
-changes to pass the first stage:
-
+#### Strings
+Strings are encoded as `<length>:<contents>`. For example, the string "hello" is encoded as "5:hello".
 ```sh
-git add .
-git commit -m "pass 1st stage" # any msg
-git push origin master
+$ ./your_bittorrent.sh decode 5:hello
+"hello"
 ```
 
-Time to move on to the next stage!
+#### Integers
+Integers are encoded as `i<number>e`. For example, 52 is encoded as `i52e` and -52 is encoded as `i-52e`.
+```sh
+$ ./your_bittorrent.sh decode i52e
+52
+```
 
-# Stage 2 & beyond
+#### Lists
+Lists are encoded as `l<bencoded_elements>e`. For example, `["hello", 52]` would be encoded as `l5:helloi52ee`.
+```sh
+$ ./your_bittorrent.sh decode l5:helloi52ee
+["hello",52]
+```
 
-Note: This section is for stages 2 and beyond.
+#### Dictionaries
+A dictionary is encoded as `d<key1><value1>...<keyN><valueN>e`. Keys are sorted in lexicographical order and must be strings. For example, `{"hello": 52, "foo":"bar"}` would be encoded as `d3:foo3:bar5:helloi52ee`.
+```sh
+$ ./your_bittorrent.sh decode d3:foo3:bar5:helloi52ee
+{"foo":"bar","hello":52}
+```
 
-1. Ensure you have `java (1.8)` installed locally
-1. Run `./your_bittorrent.sh` to run your program, which is implemented in
-   `src/main/java/Main.java`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+### Torrent File Parsing
+A torrent file (metainfo file) contains a bencoded dictionary with the following keys and values:
+- **announce**: URL to a tracker.
+- **info**: A dictionary with keys:
+  - **length**: size of the file in bytes.
+  - **name**: suggested name to save the file/directory.
+  - **piece length**: number of bytes in each piece.
+  - **pieces**: concatenated SHA-1 hashes of each piece.
+
+#### Tracker URL and File Length
+Extracted tracker URL and the length of the file from the torrent file.
+```sh
+$ ./your_bittorrent.sh info sample.torrent
+Tracker URL: http://bittorrent-test-tracker.codecrafters.io/announce
+Length: 92063
+```
+
+#### Info Hash
+Calculated the info hash of a torrent file and printed it in hexadecimal format.
+```sh
+$ ./your_bittorrent.sh info sample.torrent
+Tracker URL: http://bittorrent-test-tracker.codecrafters.io/announce
+Length: 92063
+Info Hash: d69f91e6b2ae4c542468d1073a71d4ea13879a7f
+```
+
+#### Piece Length and Hashes
+Printed the piece length and a list of piece hashes in hexadecimal format.
+```sh
+$ ./your_bittorrent.sh info sample.torrent
+Tracker URL: http://bittorrent-test-tracker.codecrafters.io/announce
+Length: 92063
+Info Hash: d69f91e6b2ae4c542468d1073a71d4ea13879a7f
+Piece Length: 32768
+Piece Hashes:
+e876f67a2a8886e8f36b136726c30fa29703022d
+6e2275e604a0766656736e81ff10b55204ad8d35
+f00d937a0213df1982bc8d097227ad9e909acc17
+```
+
+### Tracker Communication
+Made a GET request to a HTTP tracker to discover peers to download the file from.
+```sh
+$ ./your_bittorrent.sh peers sample.torrent
+178.62.82.89:51470
+165.232.33.77:51467
+178.62.85.20:51489
+```
+
+### Peer Handshake
+Established a TCP connection with a peer and completed a handshake.
+```sh
+$ ./your_bittorrent.sh handshake sample.torrent <peer_ip>:<peer_port>
+Peer ID: 0102030405060708090a0b0c0d0e0f1011121314
+```
+
+## Future Additions
+
+### Downloading a Piece
+Download one piece and save it to disk. Exchange peer messages to download the file:
+- Wait for a bitfield message.
+- Send an interested message.
+- Wait for an unchoke message.
+- Send request messages for each block.
+- Wait for piece messages and combine blocks into pieces.
+- Verify piece integrity using piece hashes.
+
+### Downloading the Entire File
+Download the entire file and save it to disk. Use a single peer to download all the pieces, verify their integrity, and combine them to assemble the file.
+```sh
+$ ./your_bittorrent.sh download -o /tmp/test.txt sample.torrent
+Downloaded sample.torrent to /tmp/test.txt.
+```
+
+### Optional Improvements
+- Pipelining requests to improve download speeds (maintain 5 requests pending at once).
+- Downloading from multiple peers at once using a work queue for each piece to be downloaded. Retry failed downloads due to network issues, hash mismatches, or missing pieces.
