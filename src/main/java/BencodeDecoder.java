@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,9 +112,11 @@ public class BencodeDecoder {
             sb.append('e');
         } else if (obj instanceof Map) {
             sb.append('d');
-            for (Map.Entry<String, Object> entry : ((Map<String, Object>) obj).entrySet()) {
-                bencodeHelper(entry.getKey(), sb);
-                bencodeHelper(entry.getValue(), sb);
+            List<String> keys = new ArrayList<>(((Map<String, Object>) obj).keySet());
+            Collections.sort(keys);
+            for (String key : keys) {
+                bencodeHelper(key, sb);
+                bencodeHelper(((Map<String, Object>) obj).get(key), sb);
             }
             sb.append('e');
         }
