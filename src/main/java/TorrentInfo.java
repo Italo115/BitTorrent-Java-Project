@@ -25,15 +25,6 @@ class TorrentInfo {
         infoHash = digest.digest(bencode2.encode((Map<String, Object>) bencode2.decode(bytes, Type.DICTIONARY).get("info")));
         pieceLength = (long) info.get("piece length");
 
-        int i = 0;
-        while (i < ((byte[]) info.get("pieces")).length) {
-            pieceHashes =
-                    Arrays.copyOfRange((byte[]) info.get("pieces"), i, i + 20);
-            System.out.print(bytesToHex(pieceHashes));
-            i += 20;
-            if (i < ((byte[]) info.get("pieces")).length)
-                System.out.println();
-        }
 
     }
 
