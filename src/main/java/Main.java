@@ -63,11 +63,11 @@ public class Main {
         String element = bencodedString.substring(1, bencodedString.length() - 1);
 //        System.out.println("Changes in element : " + element);
 //        System.out.println("Bencoded String :  " + bencodedString);
-        if (element.length() == 0) {
+        if (element.isEmpty()) {
             return list;
         }
 
-        while (element.length() > 0) {
+        while (!element.isEmpty()) {
             //System.out.println(list);
             if (Character.isDigit(element.charAt(0))) {
                 String temp = element.substring(0, element.charAt(0) + 1);
