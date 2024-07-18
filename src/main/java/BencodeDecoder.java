@@ -127,14 +127,14 @@ public class BencodeDecoder {
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
 
+        System.out.println("Tracker URL: " + announce);
+        System.out.println("Length: " + length);
 
         byte[] bencodedInfo = bencode(info);
         MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
         byte[] infoHash = sha1Digest.digest(bencodedInfo);
 
         System.out.println("Info Hash: " + bytesToHex(infoHash));
-        System.out.println("Tracker URL: " + announce);
-        System.out.println("Length: " + length);
     }
 
     private static String bytesToHex(byte[] bytes) {
@@ -143,5 +143,24 @@ public class BencodeDecoder {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    static String decodeBencode(String bencodedString) {
+        if (Character.isDigit(bencodedString.charAt(0))) {
+            int firstColonIndex = 0;
+            for (int i = 0; i < bencodedString.length(); i++) {
+                if (bencodedString.charAt(i) == ':') {
+                    firstColonIndex = i;
+                    break;
+                }
+            }
+            int length =
+                    Integer.parseInt(bencodedString.substring(0, firstColonIndex));
+            return bencodedString.substring(firstColonIndex + 1,
+                    firstColonIndex + 1 + length);
+        } else {
+            throw new RuntimeException(
+                    "Only strings are supported at the moment");
+        }
     }
 }
