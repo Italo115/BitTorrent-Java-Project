@@ -37,7 +37,7 @@ public class Main {
       return bencodedString.substring(firstColonIndex+1, firstColonIndex+1+length);
     } else if (bencodedString.charAt(0) == 'i') {
       int length = bencodedString.length() -1;
-        return bencodedString.substring(1,length);
+        return Long.parseLong(bencodedString.substring(1, length));
 
 
     }
