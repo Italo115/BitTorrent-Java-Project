@@ -2,12 +2,17 @@ import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.google.gson.Gson;
 
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-
 
 public class Main {
     private static final Gson gson = new Gson();
@@ -46,12 +51,13 @@ public class Main {
             System.out.println("Tracker URL: " + torrent.announce);
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
-            System.out.printf("Piece Length: %d\n", torrent.pieceLength);
-            printPieceHashes(torrent.info);
-
-
+            System.out.println("Piece Length: " + torrent.pieceLength);
+            for (byte[] pieceHash : torrent.pieceHashes) {
+                System.out.println(bytesToHex(pieceHash));
+            }
         } else {
-            System.out.println("Unknown command: " + command);
+            System.out.println("Unknown command: " +
+                    command);
         }
     }
 
@@ -64,8 +70,10 @@ public class Main {
                     break;
                 }
             }
-            int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
-            return bencodedString.substring(firstColonIndex + 1, firstColonIndex + 1 + length);
+            int length =
+                    Integer.parseInt(bencodedString.substring(0, firstColonIndex));
+            return bencodedString.substring(firstColonIndex + 1,
+                    firstColonIndex + 1 + length);
         } else {
             throw new RuntimeException("Only strings are supported at the moment");
         }
@@ -77,17 +85,5 @@ public class Main {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
-    }
-
-    private static void printPieceHashes(Map<?, Object> infoDict) {
-        var data = (String) infoDict.get("pieces");
-        var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
-        System.out.print("Piece Hashes:");
-        for (int i = 0; i < bytes.length; ++i) {
-            if (i % 20 == 0) {
-                System.out.println();
-            }
-            System.out.printf("%02x", bytes[i]);
-        }
     }
 }
