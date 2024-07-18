@@ -71,23 +71,20 @@ public class Main {
         }
     }
 
+    private static void printPieceHashes(Map<String, Object> infoDict) {
+        byte[] pieces = (byte[]) infoDict.get("pieces");
+        System.out.println("Piece Hashes:");
+        for (int i = 0; i < pieces.length; i += 20) {
+            byte[] pieceHash = Arrays.copyOfRange(pieces, i, i + 20);
+            System.out.println(bytesToHex(pieceHash));
+        }
+    }
+
     private static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
-    }
-
-    private static void printPieceHashes(Map<String, Object> infoDict) {
-        var data = (String) infoDict.get("pieces");
-        var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
-        System.out.print("Piece Hashes:");
-        for (int i = 0; i < bytes.length; ++i) {
-            if (i % 20 == 0) {
-                System.out.println();
-            }
-            System.out.printf("%02x", bytes[i]);
-        }
     }
 }
