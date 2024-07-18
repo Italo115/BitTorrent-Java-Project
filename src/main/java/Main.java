@@ -1,5 +1,6 @@
 import com.google.gson.Gson;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 // import com.dampcake.bencode.Bencode; - available if you need it!
 
@@ -59,19 +60,23 @@ public class Main {
     static ArrayList<Object> decodeList(String bencodedString) {
         ArrayList<Object> list = new ArrayList<>();
         String element = bencodedString.substring(1, bencodedString.length() - 1);
-        System.out.println("Changes in element : " + element);
-        System.out.println("Bencoded String :  " + bencodedString);
+//        System.out.println("Changes in element : " + element);
+//        System.out.println("Bencoded String :  " + bencodedString);
+        if (element.length() == 0) {
+            return list;
+        }
+
         while (element.length() > 0) {
-            System.out.println(list);
+            //System.out.println(list);
             if (Character.isDigit(element.charAt(0))) {
                 String temp = element.substring(0, element.charAt(0) + 1);
                 list.add(decodeString(temp));
-                System.out.println("IS Word : + " + list);
+                //System.out.println("IS Word : + " + list);
                 element = element.replaceFirst(temp, "");
             } else if (element.charAt(0) == 'i') {
                 String temp = element.substring(0, element.indexOf('e'));
                 list.add(decodeInteger(temp));
-                System.out.println("IS Integer : + " + list);
+                //System.out.println("IS Integer : + " + list);
 
                 element = element.replaceFirst(temp, "");
             }
