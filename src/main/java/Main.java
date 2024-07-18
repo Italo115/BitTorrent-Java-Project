@@ -24,7 +24,7 @@ public class Main {
 
   }
 
-  static String decodeBencode(String bencodedString) {
+  static Object decodeBencode(String bencodedString) {
     if (Character.isDigit(bencodedString.charAt(0))) {
       int firstColonIndex = 0;
       for(int i = 0; i < bencodedString.length(); i++) { 
