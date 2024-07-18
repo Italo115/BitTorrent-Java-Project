@@ -35,7 +35,17 @@ public class Main {
       }
       int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
       return bencodedString.substring(firstColonIndex+1, firstColonIndex+1+length);
-    } else {
+    } else if (bencodedString.charAt(0) == 'i') {
+      //Then it is an integer
+      //Thus we now do the bencoding for integer
+      int length = bencodedString.length() -1;
+
+        return bencodedString.substring(1,length);
+
+
+    }
+
+    else {
       throw new RuntimeException("Only strings are supported at the moment");
     }
   }
