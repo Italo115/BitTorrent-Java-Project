@@ -15,6 +15,7 @@ class TorrentInfo {
     public long pieceLength;
     public List<byte[]> pieceHashes = new ArrayList<>();
 
+    @SuppressWarnings("unchecked")
     public TorrentInfo(byte[] bytes) throws Exception {
         Bencode bencode1 = new Bencode(false);
         Bencode bencode2 = new Bencode(true);
