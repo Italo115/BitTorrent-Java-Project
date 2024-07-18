@@ -60,7 +60,7 @@ public class Main {
         ArrayList<Object> list = new ArrayList<>();
         String element = bencodedString.substring(1, bencodedString.length() - 1);
         System.out.println("Changes in element : " + element);
-        System.out.println("Bencoded String :  " + bencodedString.substring(1, bencodedString.length() - 1));
+        System.out.println("Bencoded String :  " + bencodedString);
         while (element.length() > 0) {
             System.out.println(list);
             if (Character.isDigit(element.charAt(0))) {
