@@ -1,50 +1,78 @@
 import com.google.gson.Gson;
+
+import java.util.ArrayList;
 // import com.dampcake.bencode.Bencode; - available if you need it!
 
 public class Main {
-  private static final Gson gson = new Gson();
+    private static final Gson gson = new Gson();
 
-  public static void main(String[] args) throws Exception {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    String command = args[0];
-    if("decode".equals(command)) {
-        String bencodedValue = args[1];
-        Object decoded;
-        try {
-          decoded = decodeBencode(bencodedValue);
-        } catch(RuntimeException e) {
-          System.out.println(e.getMessage());
-          return;
+    public static void main(String[] args) throws Exception {
+        // You can use print statements as follows for debugging, they'll be visible when running tests.
+        String command = args[0];
+        if ("decode".equals(command)) {
+            String bencodedValue = args[1];
+            Object decoded;
+            try {
+                decoded = decodeBencode(bencodedValue);
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+                return;
+            }
+            System.out.println(gson.toJson(decoded));
+
+        } else {
+            System.out.println("Unknown command: " + command);
         }
-        System.out.println(gson.toJson(decoded));
 
-    } else {
-      System.out.println("Unknown command: " + command);
     }
 
-  }
-
-  static Object decodeBencode(String bencodedString) {
-    if (Character.isDigit(bencodedString.charAt(0))) {
-      int firstColonIndex = 0;
-      for(int i = 0; i < bencodedString.length(); i++) { 
-        if(bencodedString.charAt(i) == ':') {
-          firstColonIndex = i;
-          break;
+    static Object decodeBencode(String bencodedString) {
+        if (Character.isDigit(bencodedString.charAt(0))) {
+            return decodeString(bencodedString);
+        } else if (bencodedString.charAt(0) == 'i') {
+            return decodeInteger(bencodedString);
+        } else if (bencodedString.charAt(0) == 'l') {
+            return decodeList(bencodedString);
+        } else {
+            throw new RuntimeException("Only strings are supported at the moment");
         }
-      }
-      int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
-      return bencodedString.substring(firstColonIndex+1, firstColonIndex+1+length);
-    } else if (bencodedString.charAt(0) == 'i') {
-      int length = bencodedString.length() -1;
+    }
+
+    static String decodeString(String bencodedString) {
+        int firstColonIndex = 0;
+        for (int i = 0; i < bencodedString.length(); i++) {
+            if (bencodedString.charAt(i) == ':') {
+                firstColonIndex = i;
+                break;
+            }
+        }
+        int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
+        return bencodedString.substring(firstColonIndex + 1, firstColonIndex + 1 + length);
+
+    }
+
+    static long decodeInteger(String bencodedString) {
+        int length = bencodedString.length() - 1;
         return Long.parseLong(bencodedString.substring(1, length));
-
-
     }
 
-    else {
-      throw new RuntimeException("Only strings are supported at the moment");
+    static ArrayList<Object> decodeList(String bencodedString) {
+        ArrayList<Object> list = new ArrayList<>();
+        String element = bencodedString.substring(1, bencodedString.length() - 1);
+        while (element.length() > 0) {
+            if (Character.isDigit(element.charAt(0))) {
+                String temp = element.substring(0, element.charAt(0) + 1);
+                list.add(decodeString(temp));
+                element = element.replaceFirst(temp, "");
+            } else if (element.charAt(0) == 'i') {
+                String temp = element.substring(0, element.indexOf('e'));
+                list.add(decodeInteger(temp));
+                element = element.replaceFirst(temp, "");
+            }
+
+        }
+        return list;
     }
-  }
-  
+
+
 }
