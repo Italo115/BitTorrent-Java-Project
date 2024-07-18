@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -92,37 +93,41 @@ public class BencodeDecoder {
         return data;
     }
 
-    public static byte[] bencode(Map<String, Object> dictionary) {
-        StringBuilder sb = new StringBuilder();
-        bencodeHelper(dictionary, sb);
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    public static byte[] bencode(Map<String, Object> dictionary) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bencodeHelper(dictionary, baos);
+        return baos.toByteArray();
     }
 
-    private static void bencodeHelper(Object obj, StringBuilder sb) {
+    private static void bencodeHelper(Object obj, ByteArrayOutputStream baos) throws IOException {
         if (obj instanceof String) {
             String str = (String) obj;
-            sb.append(str.length()).append(':').append(str);
+            baos.write(String.valueOf(str.length()).getBytes(StandardCharsets.UTF_8));
+            baos.write(':');
+            baos.write(str.getBytes(StandardCharsets.UTF_8));
         } else if (obj instanceof Long) {
-            sb.append('i').append(obj).append('e');
+            baos.write('i');
+            baos.write(String.valueOf(obj).getBytes(StandardCharsets.UTF_8));
+            baos.write('e');
         } else if (obj instanceof List) {
-            sb.append('l');
+            baos.write('l');
             for (Object item : (List<?>) obj) {
-                bencodeHelper(item, sb);
+                bencodeHelper(item, baos);
             }
-            sb.append('e');
+            baos.write('e');
         } else if (obj instanceof Map) {
-            sb.append('d');
+            baos.write('d');
             List<String> keys = new ArrayList<>(((Map<String, Object>) obj).keySet());
             Collections.sort(keys);
             for (String key : keys) {
-                bencodeHelper(key, sb);
-                bencodeHelper(((Map<String, Object>) obj).get(key), sb);
+                bencodeHelper(key, baos);
+                bencodeHelper(((Map<String, Object>) obj).get(key), baos);
             }
-            sb.append('e');
+            baos.write('e');
         }
     }
 
-    public static void printTorrentInfo(Map<String, Object> decodedDictionary) throws NoSuchAlgorithmException {
+    public static void printTorrentInfo(Map<String, Object> decodedDictionary) throws NoSuchAlgorithmException, IOException {
         String announce = (String) decodedDictionary.get("announce");
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
