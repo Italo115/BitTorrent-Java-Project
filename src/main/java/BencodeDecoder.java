@@ -1,11 +1,14 @@
 import java.util.ArrayList;
 import java.util.List;
+
 public class BencodeDecoder {
     private String encodedValue;
     private int current = 0;
+
     public BencodeDecoder(String encodedValue) {
         this.encodedValue = encodedValue;
     }
+
     public Object decode() {
         if (Character.isDigit(encodedValue.charAt(current)))
             return decodeString();
@@ -15,6 +18,7 @@ public class BencodeDecoder {
             return decodeList();
         return null;
     }
+
     private String decodeString() {
         int delimeterIndex = 0;
         for (int i = current; i < encodedValue.length(); i++) {
@@ -29,6 +33,7 @@ public class BencodeDecoder {
         current = end;
         return encodedValue.substring(start, end);
     }
+
     private Long decodeInteger() {
         int start = current + 1, end = 0;
         for (int i = start; i < encodedValue.length(); i++) {
@@ -37,10 +42,10 @@ public class BencodeDecoder {
                 break;
             }
         }
-        current = end;
         current = end + 1;
         return Long.parseLong(encodedValue.substring(start, end));
     }
+
     private List<Object> decodeList() {
         List<Object> list = new ArrayList<>();
         current++;
