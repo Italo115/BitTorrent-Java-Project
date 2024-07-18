@@ -13,7 +13,7 @@ class TorrentInfo {
     public long pieceLength;
     public byte[] pieceHashes;
     public Map<String, Object> root;
-    public Map<String, Object> info;
+    public Map<?, ?> info;
 
 
     @SuppressWarnings("unchecked")

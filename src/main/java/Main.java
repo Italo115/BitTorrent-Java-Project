@@ -71,7 +71,7 @@ public class Main {
         }
     }
 
-    private static void printPieceHashes(Map<String, Object> infoDict) {
+    private static void printPieceHashes(Map<?, ?> infoDict) {
         byte[] pieces = (byte[]) infoDict.get("pieces");
         System.out.println("Piece Hashes:");
         for (int i = 0; i < pieces.length; i += 20) {
