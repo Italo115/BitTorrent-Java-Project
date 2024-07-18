@@ -79,24 +79,7 @@ public class BencodeDecoder {
         return map;
     }
 
-    public static void main(String[] args) {
-        if (args.length != 2 || !args[0].equals("info")) {
-            System.out.println("Usage: ./your_bittorrent.sh info <torrent file>");
-            return;
-        }
-
-        String torrentFilePath = args[1];
-        try {
-            byte[] torrentData = readFile(torrentFilePath);
-            BencodeDecoder decoder = new BencodeDecoder(torrentData);
-            Map<String, Object> decodedDictionary = (Map<String, Object>) decoder.decode();
-            printTorrentInfo(decodedDictionary);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static byte[] readFile(String filePath) throws IOException {
+    public static byte[] readFile(String filePath) throws IOException {
         File file = new File(filePath);
         FileInputStream fis = new FileInputStream(file);
         byte[] data = new byte[(int) file.length()];
@@ -105,7 +88,7 @@ public class BencodeDecoder {
         return data;
     }
 
-    private static void printTorrentInfo(Map<String, Object> decodedDictionary) {
+    public static void printTorrentInfo(Map<String, Object> decodedDictionary) {
         String announce = (String) decodedDictionary.get("announce");
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
