@@ -73,7 +73,7 @@ public class BencodeEncoder {
                 case 'i' -> decodeInteger(data);
                 case 'l' -> decodeList(data);
                 case 'd' -> decodeDictionary(data);
-                default -> Character.isDigit(c) ? decodeString(data) : throw new RuntimeException("unrecognized type.");
+                default -> throw new RuntimeException("unrecognized type.");
             };
         }
 
