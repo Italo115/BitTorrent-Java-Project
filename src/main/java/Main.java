@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 public class Main {
@@ -33,7 +32,7 @@ public class Main {
             case "info" -> processInfoCommand(Path.of(arg));
             case "decode" -> processDecodeCommand(arg);
             case "peers" -> processPeersCommand(Path.of(arg));
-            default -> throw new NoSuchElementException("Unsupported command.");
+            default -> throw new IllegalArgumentException("Unsupported command.");
         }
     }
 
@@ -47,8 +46,7 @@ public class Main {
 
     private static void processDecodeCommand(String arg) {
         try {
-            Object decoded = BencodeEncoder.decode(arg);
-            System.out.println(gson.toJson(decoded));
+            System.out.println(gson.toJson(BencodeEncoder.decode(arg)));
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -64,8 +62,7 @@ public class Main {
     }
 
     private static Map<?, ?> getDecodedMap(Path filePath) throws IOException {
-        byte[] fileBytes = Files.readAllBytes(filePath);
-        return (Map<?, ?>) Objects.requireNonNull(BencodeEncoder.decode(fileBytes));
+        return (Map<?, ?>) Objects.requireNonNull(BencodeEncoder.decode(Files.readAllBytes(filePath)));
     }
 
     private static HttpRequest createFirstRequest(String trackerURL, long length, byte[] infoHash)
@@ -93,9 +90,7 @@ public class Main {
     private static Info getInfoFromDict(Map<?, ?> m) {
         String trackerUrl = (String) m.get("announce");
         Map<?, ?> infoDict = (Map<?, ?>) m.get("info");
-        long length = (Long) infoDict.get("length");
-        byte[] infoHash = calculateHash(infoDict);
-        return new Info(trackerUrl, infoDict, length, infoHash);
+        return new Info(trackerUrl, infoDict, (Long) infoDict.get("length"), calculateHash(infoDict));
     }
 
     private static byte[] calculateHash(Map<?, ?> infoDict) {
@@ -123,6 +118,6 @@ public class Main {
         return sb.toString();
     }
 
-    private record Info(String trackerUrl, Map<?, ?> infoDict, Long length, byte[] infoHash) {
+    private record Info(String trackerUrl, Map<?, ?> infoDict, long length, byte[] infoHash) {
     }
 }
