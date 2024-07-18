@@ -1,52 +1,93 @@
-import client.Client;
-import client.Request;
-import client.RequestBuilder;
+import com.dampcake.bencode.Bencode;
+import com.dampcake.bencode.Type;
 import com.google.gson.Gson;
-import bencode.Bdecoder;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
-import org.jetbrains.annotations.NotNull;
-import torrent.TorrentBuilder;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Map;
 
 
 public class Main {
     private static final Gson gson = new Gson();
-    public static void main(String @NotNull[] args) throws Exception {
+
+    public static void main(String[] args) throws Exception {
         String command = args[0];
-        switch (command) {case "decode" -> decode(args);
-            case "info" -> info(args);case "peers" -> peers(args);
-            default -> System.out.println("Unknown command: " + command);
+        if (command.equals("decode")) {
+            String bencodedValue = args[1];
+            String decoded;
+            switch (bencodedValue.charAt(0)) {
+                case 'i' -> {
+                    Bencode bencode = new Bencode(true);
+                    decoded = "" + bencode.decode(bencodedValue.getBytes(), Type.NUMBER);
+                }
+                case 'l' -> {
+                    Bencode bencode = new Bencode(false);
+                    decoded = gson.toJson(bencode.decode(bencodedValue.getBytes(), Type.LIST));
+                }
+                case 'd' -> {
+                    Bencode bencode = new Bencode(false);
+                    decoded = gson.toJson(bencode.decode(bencodedValue.getBytes(), Type.DICTIONARY));
+                }
+                default -> {
+                    try {
+                        decoded = gson.toJson(decodeBencode(bencodedValue));
+                    } catch (RuntimeException e) {
+                        System.out.println(e.getMessage());
+                        return;
+                    }
+                }
+            }
+            System.out.println(decoded);
+        } else if (command.equals("info")) {
+            String filePath = args[1];
+            TorrentInfo torrent = new TorrentInfo(Files.readAllBytes(Path.of(filePath)));
+            System.out.println("Tracker URL: " + torrent.announce);
+            System.out.println("Length: " + torrent.length);
+            System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
+            System.out.printf("Piece Length: %d\n", torrent.pieceLength);
+            printPieceHashes(torrent.info);
+
+
+        } else {
+            System.out.println("Unknown command: " + command);
         }
     }
-    private static void decode(String @NotNull [] args) throws IOException {
-        try (var stream = new ByteArrayInputStream(args[1].getBytes())) {
-            var decoded = new Bdecoder(stream).decode();
-            System.out.println(gson.toJson(decoded.toJson()));
-        } catch(RuntimeException e) {
-            System.out.println(e.getMessage());
-        }
-    }private static void info(String @NotNull [] args) throws IOException, NoSuchAlgorithmException, URISyntaxException {
-        var torrent = TorrentBuilder.fromFile(args[1]);
-        System.out.println("Tracker URL: " + torrent.announce().toString());
-        System.out.println("Length: " + torrent.info().length());
-        System.out.println("Info Hash: " + torrent.infoHash());
-        System.out.println("Piece Length: " + torrent.info().pieceLength());
-        System.out.println("Piece Hashes:"); torrent.info().pieceHashes().forEach(System.out::println);private static void peers(String @NotNull [] args) throws IOException, URISyntaxException, NoSuchAlgorithmException
-        {
-            var torrent = TorrentBuilder.fromFile(args[1]);
-            var request = RequestBuilder.builder()
-                    .url(torrent.announce())
-                    .infoHash(torrent.infoHash())
-                    .peerId("00112233445566778899")
-                    .port(6881)
-                    .uploaded(0)
-                    .downloaded(0)
-                    .left(torrent.info().length())
-                    .compact(1)
-                    .build();
-            var peers = new Client().discoverPeers(request);
-            peers.stream().map(addr -> addr.toString().substring(1)).forEach(System.out::println);
+
+    private static String decodeBencode(String bencodedString) {
+        if (Character.isDigit(bencodedString.charAt(0))) {
+            int firstColonIndex = 0;
+            for (int i = 0; i < bencodedString.length(); i++) {
+                if (bencodedString.charAt(i) == ':') {
+                    firstColonIndex = i;
+                    break;
+                }
+            }
+            int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
+            return bencodedString.substring(firstColonIndex + 1, firstColonIndex + 1 + length);
+        } else {
+            throw new RuntimeException("Only strings are supported at the moment");
         }
     }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    private static void printPieceHashes(Map<String, Object> infoDict) {
+        var data = (String) infoDict.get("pieces");
+        var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
+        System.out.print("Piece Hashes:");
+        for (int i = 0; i < bytes.length; ++i) {
+            if (i % 20 == 0) {
+                System.out.println();
+            }
+            System.out.printf("%02x", bytes[i]);
+        }
+    }
+}
