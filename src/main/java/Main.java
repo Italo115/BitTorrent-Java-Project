@@ -2,9 +2,11 @@ import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.google.gson.Gson;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 
 
 public class Main {
@@ -44,17 +46,8 @@ public class Main {
             System.out.println("Tracker URL: " + torrent.announce);
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
-            System.out.println("Piece Length: " + torrent.pieceLength);
-            System.out.println("Piece Hashes: ");
-            int i = 0;
-            while (i < ((byte[]) torrent.info.get("pieces")).length) {
-                byte[] splitted =
-                        Arrays.copyOfRange((byte[]) torrent.info.get("pieces"), i, i + 20);
-                System.out.print(bytesToHex(splitted));
-                i += 20;
-                if (i < ((byte[]) torrent.info.get("pieces")).length)
-                    System.out.println();
-            }
+            System.out.printf("Piece Length: %d\n", (long) torrent.info.get("piece length"));
+            printPieceHashes(torrent.info);
 
 
         } else {
@@ -84,5 +77,17 @@ public class Main {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    private static void printPieceHashes(Map<String, Object> infoDict) {
+        var data = (String) infoDict.get("pieces");
+        var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
+        System.out.print("Piece Hashes:");
+        for (int i = 0; i < bytes.length; ++i) {
+            if (i % 20 == 0) {
+                System.out.println();
+            }
+            System.out.printf("%02x", bytes[i]);
+        }
     }
 }
