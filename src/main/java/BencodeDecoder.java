@@ -70,3 +70,4 @@ public class BencodeDecoder {
         current++;
         return map;
     }
+}
