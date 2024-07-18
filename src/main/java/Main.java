@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+
 
 public class Main {
     private static final Gson gson = new Gson();
@@ -43,11 +43,6 @@ public class Main {
             System.out.println("Tracker URL: " + torrent.announce);
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
-            System.out.println("Piece Length: " + torrent.pieceLength);
-            System.out.println("Piece Hashes:");
-            for (String hash : torrent.pieceHashes) {
-                System.out.println(hash);
-            }
         } else {
             System.out.println("Unknown command: " + command);
         }

@@ -23,13 +23,16 @@ class TorrentInfo {
         announce = (String) root.get("announce");
         length = (long) info.get("length");
         pieceLength = (long) info.get("piece length");
-        byte[] piecesBytes = (byte[]) info.get("pieces");
+
+        String piecesString = (String) info.get("pieces");
+        byte[] piecesBytes = piecesString.getBytes();
         pieceHashes = new ArrayList<>();
         for (int i = 0; i < piecesBytes.length; i += 20) {
             byte[] hash = new byte[20];
             System.arraycopy(piecesBytes, i, hash, 0, 20);
             pieceHashes.add(bytesToHex(hash));
         }
+
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         infoHash = digest.digest(bencode2.encode((Map<String, Object>) bencode2.decode(bytes, Type.DICTIONARY).get("info")));
     }
