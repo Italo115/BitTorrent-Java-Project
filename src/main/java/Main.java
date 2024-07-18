@@ -1,5 +1,8 @@
 import com.google.gson.Gson;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 public class Main {
     private static final Gson gson = new Gson();
 
@@ -9,7 +12,7 @@ public class Main {
             String bencodedValue = args[1];
             Object decoded;
             try {
-                BencodeDecoder decoder = new BencodeDecoder(bencodedValue);
+                BencodeDecoder decoder = new BencodeDecoder(bencodedValue.getBytes(StandardCharsets.UTF_8));
                 decoded = decoder.decode();
             } catch (RuntimeException e) {
                 System.out.println(e.getMessage());
@@ -17,11 +20,12 @@ public class Main {
             }
             System.out.println(gson.toJson(decoded));
         } else if ("info".equals(command)) {
-            String temp = args[1];
-            System.out.println(temp);
+            byte[] torrentData = BencodeDecoder.readFile(args[1]);
+            BencodeDecoder decoder = new BencodeDecoder(torrentData);
+            Map<String, Object> decodedDictionary = (Map<String, Object>) decoder.decode();
+            TorrentInfo.printTorrentInfo(decodedDictionary);
         } else {
             System.out.println("Unknown command: " + command);
         }
     }
 }
-
