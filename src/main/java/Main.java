@@ -79,7 +79,7 @@ public class Main {
         return sb.toString();
     }
 
-    private static void printPieceHashes(Map<String, Object> infoDict) {
+    private static void printPieceHashes(Map<?, Object> infoDict) {
         var data = (String) infoDict.get("pieces");
         var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
         System.out.print("Piece Hashes:");

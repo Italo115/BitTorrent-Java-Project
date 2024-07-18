@@ -13,7 +13,7 @@ class TorrentInfo {
     public long pieceLength;
     public byte[] pieceHashes;
     public Map<String, Object> root;
-    public Map<String, Object> info;
+    public Map<?, Object> info;
 
 
     @SuppressWarnings("unchecked")
@@ -25,7 +25,7 @@ class TorrentInfo {
         announce = (String) root.get("announce");
         length = (long) info.get("length");
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
-        infoHash = digest.digest(bencode2.encode((Map<String, Object>) bencode2.decode(bytes, Type.DICTIONARY).get("info")));
+        infoHash = digest.digest(bencode2.encode((Map<?, Object>) bencode2.decode(bytes, Type.DICTIONARY).get("info")));
         pieceLength = (long) info.get("piece length");
     }
 }
