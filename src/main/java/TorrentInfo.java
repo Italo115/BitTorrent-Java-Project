@@ -27,15 +27,5 @@ class TorrentInfo {
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         infoHash = digest.digest(bencode2.encode((Map<String, Object>) bencode2.decode(bytes, Type.DICTIONARY).get("info")));
         pieceLength = (long) info.get("piece length");
-
-
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 }

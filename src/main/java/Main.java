@@ -47,7 +47,7 @@ public class Main {
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
             System.out.printf("Piece Length: %d\n", torrent.pieceLength);
-            printPieceHashes(torrent.info);
+            printPieceHashes(torrent.root);
 
 
         } else {
