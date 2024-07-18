@@ -48,9 +48,9 @@ public class Main {
             System.out.println("Piece Hashes: ");
             int i = 0;
             while (i < ((byte[]) torrent.info.get("pieces")).length) {
-                torrent.pieceHashes =
+                byte[] splitted =
                         Arrays.copyOfRange((byte[]) torrent.info.get("pieces"), i, i + 20);
-                System.out.print(bytesToHex(torrent.pieceHashes));
+                System.out.print(bytesToHex(splitted));
                 i += 20;
                 if (i < ((byte[]) torrent.info.get("pieces")).length)
                     System.out.println();
