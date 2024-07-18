@@ -170,13 +170,6 @@ public class Main {
                 out.write(requestBuffer.array());
                 out.flush();
 
-                // Wait for piece message (ID = 7)
-                if (in.read() != 0) throw new IOException("Invalid piece message length");
-                if (in.read() != (blockSize + 9) >> 24) throw new IOException("Invalid piece message length");
-                if (in.read() != ((blockSize + 9) >> 16) & 0xff) throw new IOException("Invalid piece message length");
-                if (in.read() != ((blockSize + 9) >> 8) & 0xff) throw new IOException("Invalid piece message length");
-                if (in.read() != (blockSize + 9) & 0xff) throw new IOException("Invalid piece message length");
-                if (in.read() != 7) throw new IOException("Invalid piece message ID");
 
                 byte[] block = new byte[blockSize];
                 in.readNBytes(block, 0, blockSize);
