@@ -134,7 +134,7 @@ public class BencodeDecoder {
         MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
         byte[] infoHash = sha1Digest.digest(bencodedInfo);
 
-        // System.out.println("Info Hash: " + bytesToHex(infoHash));
+        System.out.println("Info Hash: " + bytesToHex(infoHash));
     }
 
     private static String bytesToHex(byte[] bytes) {
