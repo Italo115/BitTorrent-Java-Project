@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 
 public class Main {
@@ -44,7 +45,18 @@ public class Main {
             System.out.println("Length: " + torrent.length);
             System.out.println("Info Hash: " + bytesToHex(torrent.infoHash));
             System.out.println("Piece Length: " + torrent.pieceLength);
-            
+            System.out.println("Piece Hashes: ");
+            int i = 0;
+            while (i < ((byte[]) torrent.info.get("pieces")).length) {
+                torrent.pieceHashes =
+                        Arrays.copyOfRange((byte[]) torrent.info.get("pieces"), i, i + 20);
+                System.out.print(bytesToHex(torrent.pieceHashes));
+                i += 20;
+                if (i < ((byte[]) torrent.info.get("pieces")).length)
+                    System.out.println();
+            }
+
+
         } else {
             System.out.println("Unknown command: " + command);
         }

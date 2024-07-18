@@ -12,13 +12,16 @@ class TorrentInfo {
     public byte[] infoHash;
     public long pieceLength;
     public byte[] pieceHashes;
+    public Map<String, Object> root;
+    public Map<String, Object> info;
+
 
     @SuppressWarnings("unchecked")
     public TorrentInfo(byte[] bytes) throws NoSuchAlgorithmException {
         Bencode bencode1 = new Bencode(false);
         Bencode bencode2 = new Bencode(true);
-        Map<String, Object> root = bencode1.decode(bytes, Type.DICTIONARY);
-        Map<String, Object> info = (Map<String, Object>) root.get("info");
+        root = bencode1.decode(bytes, Type.DICTIONARY);
+        info = (Map<String, Object>) root.get("info");
         announce = (String) root.get("announce");
         length = (long) info.get("length");
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
