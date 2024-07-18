@@ -1,7 +1,11 @@
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -23,15 +27,16 @@ public class Main {
     private static final int PEER_PORT = 6881;
 
     public static void main(String[] args) throws Exception {
-        processCommand(args[0], args[1]);
+        processCommand(args[0], args[1], args.length > 2 ? args[2] : null);
     }
 
-    private static void processCommand(String command, String arg)
+    private static void processCommand(String command, String arg, String peer)
             throws IOException, URISyntaxException, InterruptedException {
         switch (command) {
             case "info" -> processInfoCommand(Path.of(arg));
             case "decode" -> processDecodeCommand(arg);
             case "peers" -> processPeersCommand(Path.of(arg));
+            case "handshake" -> processHandshakeCommand(Path.of(arg), peer);
             default -> throw new IllegalArgumentException("Unsupported command.");
         }
     }
@@ -59,6 +64,53 @@ public class Main {
         HttpRequest httpGetRequest = createFirstRequest(info.trackerUrl(), info.length(), info.infoHash());
         HttpResponse<byte[]> response = HttpClient.newHttpClient().send(httpGetRequest, HttpResponse.BodyHandlers.ofByteArray());
         printResponse(BencodeEncoder.decode(response.body()));
+    }
+
+    private static void processHandshakeCommand(Path filePath, String peerAddress)
+            throws IOException, URISyntaxException, InterruptedException {
+        if (peerAddress == null || !peerAddress.contains(":")) {
+            throw new IllegalArgumentException("Peer address must be provided in the format <peer_ip>:<peer_port>");
+        }
+        String[] peerParts = peerAddress.split(":");
+        String peerIp = peerParts[0];
+        int peerPort = Integer.parseInt(peerParts[1]);
+
+        Map<?, ?> infoDict = getDecodedMap(filePath);
+        Info info = getInfoFromDict(infoDict);
+
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(peerIp, peerPort), 10000); // 10-second timeout
+            OutputStream out = socket.getOutputStream();
+            InputStream in = socket.getInputStream();
+
+            // Send handshake
+            ByteBuffer handshakeBuffer = createHandshake(info.infoHash());
+            out.write(handshakeBuffer.array());
+            out.flush();
+
+            // Receive handshake
+            byte[] response = new byte[68]; // Handshake message is always 68 bytes
+            int bytesRead = in.read(response);
+            if (bytesRead != 68) {
+                throw new IOException("Incomplete handshake received");
+            }
+
+            // Extract and print peer ID
+            byte[] receivedPeerId = new byte[20];
+            System.arraycopy(response, 48, receivedPeerId, 0, 20);
+            System.out.printf("Peer ID: %s%n", toHexString(receivedPeerId));
+        }
+    }
+
+    private static ByteBuffer createHandshake(byte[] infoHash) {
+        ByteBuffer buffer = ByteBuffer.allocate(68);
+        buffer.put((byte) 19); // Protocol string length
+        buffer.put("BitTorrent protocol".getBytes(StandardCharsets.US_ASCII));
+        buffer.put(new byte[8]); // Reserved bytes
+        buffer.put(infoHash);
+        buffer.put(PEER_ID.getBytes(StandardCharsets.US_ASCII));
+        buffer.flip();
+        return buffer;
     }
 
     private static Map<?, ?> getDecodedMap(Path filePath) throws IOException {
