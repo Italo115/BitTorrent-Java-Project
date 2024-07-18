@@ -37,6 +37,7 @@ public class Main {
             case "decode" -> processDecodeCommand(arg);
             case "peers" -> processPeersCommand(Path.of(arg));
             case "handshake" -> processHandshakeCommand(Path.of(arg), peer);
+            case "download_piece" -> System.err.println("Feature not currently implemented.");
             default -> throw new IllegalArgumentException("Unsupported command.");
         }
     }
