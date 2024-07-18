@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-
 public class Main {
     private static final Gson gson = new Gson();
 
@@ -47,9 +46,13 @@ public class Main {
             for (byte[] pieceHash : torrent.pieceHashes) {
                 System.out.println(bytesToHex(pieceHash));
             }
+        } else if (command.equals("peers")) {
+            String filePath = args[1];
+            TorrentInfo torrent = new TorrentInfo(Files.readAllBytes(Path.of(filePath)));
+            Peers peers = new Peers(torrent);
+            peers.discoverPeers();
         } else {
-            System.out.println("Unknown command: " +
-                    command);
+            System.out.println("Unknown command: " + command);
         }
     }
 
@@ -62,10 +65,8 @@ public class Main {
                     break;
                 }
             }
-            int length =
-                    Integer.parseInt(bencodedString.substring(0, firstColonIndex));
-            return bencodedString.substring(firstColonIndex + 1,
-                    firstColonIndex + 1 + length);
+            int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
+            return bencodedString.substring(firstColonIndex + 1, firstColonIndex + 1 + length);
         } else {
             throw new RuntimeException("Only strings are supported at the moment");
         }
