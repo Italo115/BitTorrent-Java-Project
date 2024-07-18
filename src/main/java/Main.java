@@ -9,7 +9,7 @@ public class Main {
     String command = args[0];
     if("decode".equals(command)) {
         String bencodedValue = args[1];
-        String decoded;
+        Object decoded;
         try {
           decoded = decodeBencode(bencodedValue);
         } catch(RuntimeException e) {
