@@ -2,6 +2,7 @@ import com.google.gson.Gson;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 // import com.dampcake.bencode.Bencode; - available if you need it!
 
 public class Main {
@@ -57,8 +58,8 @@ public class Main {
         return Long.parseLong(bencodedString.substring(1, length));
     }
 
-    static ArrayList<Object> decodeList(String bencodedString) {
-        ArrayList<Object> list = new ArrayList<>();
+    static List<Object> decodeList(String bencodedString) {
+        List<Object> list = new ArrayList<>();
         String element = bencodedString.substring(1, bencodedString.length() - 1);
 //        System.out.println("Changes in element : " + element);
 //        System.out.println("Bencoded String :  " + bencodedString);
