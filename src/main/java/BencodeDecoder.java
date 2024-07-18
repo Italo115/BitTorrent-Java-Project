@@ -127,12 +127,13 @@ public class BencodeDecoder {
         Map<String, Object> info = (Map<String, Object>) decodedDictionary.get("info");
         Long length = (Long) info.get("length");
 
-        //System.out.println("Tracker URL: " + announce);
-        //System.out.println("Length: " + length);
+        System.out.println("Tracker URL: " + announce);
+        System.out.println("Length: " + length);
 
         byte[] bencodedInfo = bencode(info);
+        System.out.println("Bencoded Info Dictionary: " + bytesToHex(bencodedInfo)); // Debug output
+
         MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-        System.out.println("Info goes here : ----- " + sha1Digest);
         byte[] infoHash = sha1Digest.digest(bencodedInfo);
 
         System.out.println("Info Hash: " + bytesToHex(infoHash));
@@ -144,6 +145,5 @@ public class BencodeDecoder {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
-
     }
 }
