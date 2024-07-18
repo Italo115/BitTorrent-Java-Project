@@ -6,153 +6,89 @@ import java.util.List;
 import java.util.Map;
 
 public class BencodeEncoder {
-    static Object decode(String bencodedString)
-            throws UnsupportedEncodingException {
+
+    public static Object decode(String bencodedString) throws UnsupportedEncodingException {
         byte[] data = bencodedString.getBytes(StandardCharsets.UTF_8);
         return new Decoder().decode(data);
     }
 
-    static Object decode(byte[] data) {
+    public static Object decode(byte[] data) {
         return new Decoder().decode(data);
     }
 
     public static byte[] encodeToByteBuff(Object obj) {
-        switch (obj) {
-            case Integer i -> {
-                String repr = String.valueOf(i);
-                int len = repr.length();
-                byte[] bytes = new byte[len + 2];
-                int k = 1;
-                bytes[0] = 'i';
-                for (char c : repr.toCharArray()) {
-                    bytes[k++] = (byte) c;
-                }
-                bytes[len - 1] = 'e';
-                return bytes;
-            }
-            case Long l -> {
-                return String.format("i%de", l).getBytes(StandardCharsets.ISO_8859_1);
-            }
+        return switch (obj) {
+            case Integer i -> String.format("i%de", i).getBytes(StandardCharsets.ISO_8859_1);
+            case Long l -> String.format("i%de", l).getBytes(StandardCharsets.ISO_8859_1);
+            case String str -> (str.length() + ":" + str).getBytes(StandardCharsets.ISO_8859_1);
             case List<?> lst -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append('l');
-                for (var elem : lst) {
-                    stringBuilder.append(new String(encodeToByteBuff(elem),
-                            StandardCharsets.ISO_8859_1));
-                }
-                stringBuilder.append('e');
-                return stringBuilder.toString().getBytes(
-                        StandardCharsets.ISO_8859_1);
-            }
-            case String str -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(str.length());
-                stringBuilder.append(':');
-                var prefix = stringBuilder.toString().getBytes(StandardCharsets.ISO_8859_1);
-                var stringBytes = str.getBytes(StandardCharsets.ISO_8859_1);
-                byte[] buff = new byte[prefix.length + stringBytes.length];
-                System.arraycopy(prefix, 0, buff, 0, prefix.length);
-                System.arraycopy(stringBytes, 0, buff, prefix.length, stringBytes.length);
-                return buff;
+                StringBuilder sb = new StringBuilder("l");
+                for (Object elem : lst) sb.append(new String(encodeToByteBuff(elem), StandardCharsets.ISO_8859_1));
+                sb.append('e');
+                yield sb.toString().getBytes(StandardCharsets.ISO_8859_1);
             }
             case Map<?, ?> m -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append('d');
-                m.keySet().stream().map(k -> (String) k).sorted().forEachOrdered(k -> {
-                    stringBuilder.append(new String(encodeToByteBuff(k), StandardCharsets.ISO_8859_1));
-                    stringBuilder.append(new String(encodeToByteBuff(m.get(k)), StandardCharsets.ISO_8859_1));
+                StringBuilder sb = new StringBuilder("d");
+                m.keySet().stream().map(k -> (String) k).sorted().forEach(k -> {
+                    sb.append(new String(encodeToByteBuff(k), StandardCharsets.ISO_8859_1));
+                    sb.append(new String(encodeToByteBuff(m.get(k)), StandardCharsets.ISO_8859_1));
                 });
-                stringBuilder.append('e');
-                return stringBuilder.toString().getBytes(StandardCharsets.ISO_8859_1);
+                sb.append('e');
+                yield sb.toString().getBytes(StandardCharsets.ISO_8859_1);
             }
-            case null, default -> {
-                throw new RuntimeException("encode: unrecognized type.");
-            }
-        }
+            default -> throw new RuntimeException("encode: unrecognized type.");
+        };
     }
 
-    static String encode(Object obj) {
-        switch (obj) {
-            case Integer i -> {
-                return String.format("i%de", i);
-            }
-            case Long l -> {
-                return String.format("i%de", l);
-            }
+    public static String encode(Object obj) {
+        return switch (obj) {
+            case Integer i -> String.format("i%de", i);
+            case Long l -> String.format("i%de", l);
+            case String str -> str.length() + ":" + str;
             case List<?> lst -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append('l');
-                for (var elem : lst) {
-                    stringBuilder.append(encode(elem));
-                }
-                stringBuilder.append('e');
-                return stringBuilder.toString();
-            }
-            case String str -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(str.length());
-                stringBuilder.append(':');
-                for (byte b : str.getBytes(StandardCharsets.ISO_8859_1)) {
-                    stringBuilder.append((char) b);
-                }
-                // return String.format("%d:%s", str.length(), str);
-                return stringBuilder.toString();
+                StringBuilder sb = new StringBuilder("l");
+                for (Object elem : lst) sb.append(encode(elem));
+                sb.append('e');
+                yield sb.toString();
             }
             case Map<?, ?> m -> {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append('d');
-                m.keySet().stream().map(k -> (String) k).sorted().forEachOrdered(k -> {
-                    stringBuilder.append(encode(k));
-                    stringBuilder.append(encode(m.get(k)));
+                StringBuilder sb = new StringBuilder("d");
+                m.keySet().stream().map(k -> (String) k).sorted().forEach(k -> {
+                    sb.append(encode(k));
+                    sb.append(encode(m.get(k)));
                 });
-                stringBuilder.append('e');
-                return stringBuilder.toString();
+                sb.append('e');
+                yield sb.toString();
             }
-            case null, default -> {
-                throw new RuntimeException("encode: unrecognized type.");
-            }
-        }
+            default -> throw new RuntimeException("encode: unrecognized type.");
+        };
     }
 
     static class Decoder {
-        int index;
-
-        public Decoder() {
-            this.index = 0;
-        }
+        private int index = 0;
 
         public Object decode(byte[] data) {
             char c = (char) data[index];
-            if (Character.isDigit(c)) {
-                //string
-                return decodeString(data);
-            } else if (c == 'l') {
-                return decodeList(data);
-            } else if (c == 'i') {
-                return decodeInteger(data);
-            } else if (c == 'd') {
-                return decodeDictionary(data);
-            } else {
-                throw new RuntimeException("unrecognized type.");
-            }
+            return switch (c) {
+                case 'i' -> decodeInteger(data);
+                case 'l' -> decodeList(data);
+                case 'd' -> decodeDictionary(data);
+                default -> Character.isDigit(c) ? decodeString(data) : throw new RuntimeException("unrecognized type.");
+            };
         }
 
-        public String decodeString(byte[] data) {
+        private String decodeString(byte[] data) {
             int len = 0;
             while (data[index] != ':') {
-                len = 10 * len + ((char) data[index]) - '0';
-                index++;
+                len = len * 10 + data[index++] - '0';
             }
             index++;
-            byte[] strBytes = new byte[len];
-            for (int i = 0; i < len; ++i) {
-                strBytes[i] = data[index++];
-            }
-            return new String(strBytes, StandardCharsets.ISO_8859_1);
+            String str = new String(data, index, len, StandardCharsets.ISO_8859_1);
+            index += len;
+            return str;
         }
 
-        public List<Object> decodeList(byte[] data) {
-            assert data[index] == 'l';
+        private List<Object> decodeList(byte[] data) {
             index++;
             List<Object> list = new ArrayList<>();
             while (data[index] != 'e') {
@@ -162,21 +98,18 @@ public class BencodeEncoder {
             return list;
         }
 
-        public Long decodeInteger(byte[] data) {
-            assert data[index] == 'i';
+        private Long decodeInteger(byte[] data) {
             index++;
-            StringBuilder stringBuilder = new StringBuilder();
-            while (data[index] != 'e') {
-                stringBuilder.append((char) data[index++]);
-            }
+            int start = index;
+            while (data[index] != 'e') index++;
+            long value = Long.parseLong(new String(data, start, index - start, StandardCharsets.ISO_8859_1));
             index++;
-            return Long.parseLong(stringBuilder.toString());
+            return value;
         }
 
-        public Map<String, Object> decodeDictionary(byte[] data) {
-            assert data[index] == 'd';
-            Map<String, Object> dictionary = new HashMap<>();
+        private Map<String, Object> decodeDictionary(byte[] data) {
             index++;
+            Map<String, Object> dictionary = new HashMap<>();
             while (data[index] != 'e') {
                 String key = decodeString(data);
                 Object value = decode(data);
