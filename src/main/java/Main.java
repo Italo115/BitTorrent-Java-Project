@@ -36,7 +36,7 @@ public class Main {
       int length = Integer.parseInt(bencodedString.substring(0, firstColonIndex));
       return bencodedString.substring(firstColonIndex+1, firstColonIndex+1+length);
     } else if (bencodedString.charAt(0) == 'i') {
-      System.out.println(bencodedString.charAt(0));
+      System.out.println("Full string bencode here:  "+bencodedString);
       //Then it is an integer
       //Thus we now do the bencoding for integer
       int length = bencodedString.length() -1;
