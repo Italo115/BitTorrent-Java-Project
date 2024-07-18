@@ -84,10 +84,11 @@ public class Main {
         var bytes = data.getBytes(StandardCharsets.ISO_8859_1);
         System.out.print("Piece Hashes:");
         for (int i = 0; i < bytes.length; ++i) {
+            System.out.printf("%02x", bytes[i]);
             if (i % 20 == 0) {
                 System.out.println();
             }
-            System.out.printf("%02x", bytes[i]);
+
         }
     }
 }
