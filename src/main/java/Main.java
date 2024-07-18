@@ -72,12 +72,12 @@ public class Main {
             if (Character.isDigit(element.charAt(0))) {
                 String temp = element.substring(0, element.charAt(0) + 1);
                 list.add(decodeString(temp));
-                //System.out.println("IS Word : + " + list);
+                System.out.println("IS Word : + " + list);
                 element = element.replaceFirst(temp, "");
             } else if (element.charAt(0) == 'i') {
                 String temp = element.substring(0, element.indexOf('e'));
                 list.add(decodeInteger(temp));
-                //System.out.println("IS Integer : + " + list);
+                System.out.println("IS Integer : + " + list);
 
                 element = element.replaceFirst(temp, "");
             }
