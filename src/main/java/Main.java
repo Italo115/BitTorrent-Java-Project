@@ -1,6 +1,5 @@
 import com.google.gson.Gson;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -27,20 +25,18 @@ public class Main {
     private static final Gson gson = new Gson();
     private static final String PEER_ID = "00112233445566778899";
     private static final int PEER_PORT = 6881;
-    private static final int BLOCK_SIZE = 16 * 1024; // 16 KiB
 
     public static void main(String[] args) throws Exception {
-        processCommand(args[0], args[1], args.length > 2 ? args[2] : null, args.length > 3 ? args[3] : null);
+        processCommand(args[0], args[1], args.length > 2 ? args[2] : null);
     }
 
-    private static void processCommand(String command, String arg, String peer, String outFile)
+    private static void processCommand(String command, String arg, String peer)
             throws IOException, URISyntaxException, InterruptedException {
         switch (command) {
             case "info" -> processInfoCommand(Path.of(arg));
             case "decode" -> processDecodeCommand(arg);
             case "peers" -> processPeersCommand(Path.of(arg));
             case "handshake" -> processHandshakeCommand(Path.of(arg), peer);
-            case "download_piece" -> processDownloadPieceCommand(Path.of(arg), peer, outFile);
             default -> throw new IllegalArgumentException("Unsupported command.");
         }
     }
@@ -103,93 +99,6 @@ public class Main {
             byte[] receivedPeerId = new byte[20];
             System.arraycopy(response, 48, receivedPeerId, 0, 20);
             System.out.printf("Peer ID: %s%n", toHexString(receivedPeerId));
-        }
-    }
-
-    private static void processDownloadPieceCommand(Path filePath, String peerAddress, String outFile)
-            throws IOException, URISyntaxException, InterruptedException, NoSuchAlgorithmException {
-        if (peerAddress == null || !peerAddress.contains(":")) {
-            throw new IllegalArgumentException("Peer address must be provided in the format <peer_ip>:<peer_port>");
-        }
-        if (outFile == null) {
-            throw new IllegalArgumentException("Output file path must be provided");
-        }
-        String[] peerParts = peerAddress.split(":");
-        String peerIp = peerParts[0];
-        int peerPort = Integer.parseInt(peerParts[1]);
-
-        Map<?, ?> infoDict = getDecodedMap(filePath);
-        Info info = getInfoFromDict(infoDict);
-
-        int pieceIndex = 0; // Assuming piece index is provided as a fixed value
-
-        try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(peerIp, peerPort), 10000); // 10-second timeout
-            OutputStream out = socket.getOutputStream();
-            InputStream in = socket.getInputStream();
-
-            // Send handshake
-            ByteBuffer handshakeBuffer = createHandshake(info.infoHash());
-            out.write(handshakeBuffer.array());
-            out.flush();
-
-            // Receive handshake
-            byte[] response = new byte[68]; // Handshake message is always 68 bytes
-            int bytesRead = in.read(response);
-            if (bytesRead != 68) {
-                throw new IOException("Incomplete handshake received");
-            }
-
-            // Wait for bitfield message (ID = 5)
-            if (in.read() != 0) throw new IOException("Invalid bitfield message length");
-            if (in.read() != 1) throw new IOException("Invalid bitfield message ID");
-            if (in.read() != 5) throw new IOException("Invalid bitfield message");
-
-            // Send interested message (ID = 2)
-            out.write(new byte[]{0, 0, 0, 1, 2});
-            out.flush();
-
-            // Wait for unchoke message (ID = 1)
-            if (in.read() != 0) throw new IOException("Invalid unchoke message length");
-            if (in.read() != 1) throw new IOException("Invalid unchoke message ID");
-            if (in.read() != 1) throw new IOException("Invalid unchoke message");
-
-            int pieceLength = (int) info.infoDict().get("piece length");
-            byte[] pieceData = new byte[pieceLength];
-            int offset = 0;
-
-            // Break the piece into blocks and send request for each block
-            while (offset < pieceLength) {
-                int blockSize = Math.min(BLOCK_SIZE, pieceLength - offset);
-                ByteBuffer requestBuffer = ByteBuffer.allocate(17);
-                requestBuffer.putInt(13); // Length of the message (1 + 4 + 4 + 4)
-                requestBuffer.put((byte) 6); // Message ID for request
-                requestBuffer.putInt(pieceIndex);
-                requestBuffer.putInt(offset);
-                requestBuffer.putInt(blockSize);
-                out.write(requestBuffer.array());
-                out.flush();
-
-
-                byte[] block = new byte[blockSize];
-                in.readNBytes(block, 0, blockSize);
-                System.arraycopy(block, 0, pieceData, offset, blockSize);
-                offset += blockSize;
-            }
-
-            // Verify the piece hash
-            byte[] pieceHash = Arrays.copyOfRange((byte[]) info.infoDict().get("pieces"), pieceIndex * 20, (pieceIndex + 1) * 20);
-            MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-            byte[] calculatedHash = sha1Digest.digest(pieceData);
-            if (!Arrays.equals(pieceHash, calculatedHash)) {
-                throw new IOException("Piece hash does not match");
-            }
-
-            // Save piece to file
-            try (FileOutputStream fos = new FileOutputStream(outFile)) {
-                fos.write(pieceData);
-            }
-            System.out.printf("Piece %d downloaded to %s.%n", pieceIndex, outFile);
         }
     }
 
