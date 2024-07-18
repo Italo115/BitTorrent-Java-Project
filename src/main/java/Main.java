@@ -40,6 +40,7 @@ public class Main {
       //Then it is an integer
       //Thus we now do the bencoding for integer
       int length = bencodedString.length() -1;
+      System.out.println("Bencoded Fix :  "+bencodedString.substring(1,length));
         return bencodedString.substring(1,length);
 
 
